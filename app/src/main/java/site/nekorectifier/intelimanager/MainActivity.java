@@ -1,19 +1,13 @@
 package site.nekorectifier.intelimanager;
 
 import android.os.Bundle;
-import com.google.android.material.snackbar.Snackbar;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-
 import java.io.IOException;
 import java.util.Objects;
-
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -35,14 +29,6 @@ public class MainActivity extends AppCompatActivity {
 
         setSupportActionBar(binding.toolbar);
 
-        binding.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
         binding.buttonUnlock.setOnClickListener(view -> {
            //TODO 发送HTTP请求
 
@@ -57,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-                .url("192.168.1.243")
+                .url("http://192.168.1.243")
                 .build();
 
         Call call = client.newCall(request);
@@ -72,10 +58,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "onResponse: "+ Objects.requireNonNull(response.body()).toString());
             }
         });
-
-
-
-
     }
 
     @Override
