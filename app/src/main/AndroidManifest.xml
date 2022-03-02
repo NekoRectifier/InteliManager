@@ -2,12 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="site.nekorectifier.intelimanager">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.开门">
+        android:theme="@style/Theme.开门"
+        android:usesCleartextTraffic="true">
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_settings" />
+        <activity
+            android:name=".WebViewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.开门.NoActionBar" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

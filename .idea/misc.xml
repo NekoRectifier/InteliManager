@@ -4,8 +4,10 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Android_Projects/intelimanager/app/src/main/res/layout/activity_main.xml" value="0.36923078006541266" />
+        <entry key="..\:/Android_Projects/intelimanager/app/src/main/res/layout/activity_web_view.xml" value="0.2436923148431724" />
         <entry key="..\:/Android_Projects/intelimanager/app/src/main/res/layout/content_main.xml" value="0.20677083333333332" />
         <entry key="..\:/Android_Projects/intelimanager/app/src/main/res/menu/menu_main.xml" value="0.1" />
+        <entry key="..\:/Android_Projects/intelimanager/app/src/main/res/xml/network_security_config.xml" value="0.1388888888888889" />
       </map>
     </option>
   </component>

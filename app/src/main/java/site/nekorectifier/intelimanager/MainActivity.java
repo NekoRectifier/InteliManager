@@ -1,23 +1,30 @@
 package site.nekorectifier.intelimanager;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.android.material.snackbar.Snackbar;
+
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.Objects;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import site.nekorectifier.intelimanager.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+    private SharedPreferences preferences;
     String TAG = "MainActivity";
 
     @Override
@@ -26,11 +33,14 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
         setSupportActionBar(binding.toolbar);
+
+        preferences = this.getSharedPreferences("app",MODE_PRIVATE);
+
 
         binding.buttonUnlock.setOnClickListener(view -> {
            //TODO 发送HTTP请求
+
 
         });
 
@@ -39,25 +49,31 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        if (!preferences.getBoolean("electricity_check_setup", false)) {
+            Snackbar.make(binding.cardView, "点击按钮来设置电费查询", Snackbar.LENGTH_LONG)
+                    .setAction("开始设置", view -> {
+                        Intent intent = new Intent(MainActivity.this, WebViewActivity.class);
+                        startActivity(intent);
+                    })
+                    .show();
+            // 具体实现上可能不够好
+        }
 
+        JsonObjectRequest request = new JsonObjectRequest
+                (Request.Method.POST, "192.168.2.243", null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
 
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url("http://192.168.1.243")
-                .build();
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
 
-        Call call = client.newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                    }
+                });
 
-            }
+        
 
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                Log.i(TAG, "onResponse: "+ Objects.requireNonNull(response.body()).toString());
-            }
-        });
     }
 
     @Override
