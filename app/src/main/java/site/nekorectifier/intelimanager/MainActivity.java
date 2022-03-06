@@ -2,23 +2,27 @@ package site.nekorectifier.intelimanager;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
+
 import androidx.appcompat.app.AppCompatActivity;
-import android.util.Log;
+
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
+import com.androidnetworking.AndroidNetworking;
+import com.androidnetworking.common.Priority;
+import com.androidnetworking.error.ANError;
+import com.androidnetworking.interfaces.JSONArrayRequestListener;
+import com.androidnetworking.interfaces.JSONObjectRequestListener;
 import com.google.android.material.snackbar.Snackbar;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.Objects;
+
 import site.nekorectifier.intelimanager.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
@@ -31,21 +35,81 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        AndroidNetworking.initialize(getApplicationContext());
+
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         setSupportActionBar(binding.toolbar);
 
-        preferences = this.getSharedPreferences("app",MODE_PRIVATE);
-
+        preferences = this.getSharedPreferences("app", MODE_PRIVATE);
 
         binding.buttonUnlock.setOnClickListener(view -> {
-           //TODO 发送HTTP请求
+            //TODO 发送HTTP请求
 
+            JSONObject object = new JSONObject();
+            try {
+                object.put("token",
+                        "226f76b55acb49701e06ded1d95165d179458f6fc37f5c6fc760ae30dec1c378");
+                object.put("DEVICE_TYPE", Build.MODEL);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
+            AndroidNetworking.post(
+                    preferences.getString("MCU_IP", "http://192.168.2.243"))
+                    .addJSONObjectBody(object)
+                    .setPriority(Priority.HIGH)
+                    .build()
+                    .getAsJSONObject(new JSONObjectRequestListener() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            /***
+                             * 返回的示例应该如下:
+                             * {
+                             *     "result": "ok",
+                             *     "reason": null
+                             * }
+                             */
+
+                            try {
+                                if (response.getString("result").equals("ok")) {
+                                    Snackbar.make(binding.getRoot(),
+                                            "门已开",
+                                            Snackbar.LENGTH_LONG).show();
+                                } else {
+                                    Snackbar.make(binding.getRoot(),
+                                            "出错了\n" + object.getString("reason"),
+                                            Snackbar.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onError(ANError anError) {
+                            Snackbar.make(binding.getRoot(), Objects.requireNonNull(anError.getLocalizedMessage()), Snackbar.LENGTH_LONG).show();
+                        }
+                    });
         });
 
         binding.buttonJournal.setOnClickListener(view -> {
-           //TODO 查看日志
+            //TODO 查看日志
+            AndroidNetworking.get(preferences.getString("MCU_IP", "http://192.168.2.243") + "/getLog")
+                    .addHeaders("token", preferences.getString("token", ""))
+                    .setPriority(Priority.MEDIUM)
+                    .build()
+                    .getAsJSONArray(new JSONArrayRequestListener() {
+                        @Override
+                        public void onResponse(JSONArray response) {
+                            // 谁知道get的是什么 到时候再看
+                        }
+
+                        @Override
+                        public void onError(ANError anError) {
+
+                        }
+                    });
         });
 
 
@@ -58,22 +122,12 @@ public class MainActivity extends AppCompatActivity {
                     .show();
             // 具体实现上可能不够好
         }
+    }
 
-        JsonObjectRequest request = new JsonObjectRequest
-                (Request.Method.POST, "192.168.2.243", null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-
-                    }
-                });
-
-        
-
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 处理设置后的ui相关更新
     }
 
     @Override
@@ -92,6 +146,8 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
 
