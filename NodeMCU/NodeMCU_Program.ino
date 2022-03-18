@@ -1,5 +1,6 @@
-#include <ESP8266WiFiMulti.h> //  ESP8266WiFiMulti库
+#include <ESP8266WiFiMulti.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266WebServerSecure.h>
 
 ESP8266WiFiMulti wifiMulti;
 ESP8266WebServer server(80);
@@ -12,8 +13,9 @@ void setup()
     delay(10);
 
     // 设置WiFi
-    wifiMulti.addAP("ssid", "password");
-    while(wifiMulti.run() != WL_CONNECTED)){
+    wifiMulti.addAP("叁壹零", "sanyiling");
+    while (wifiMulti.run() != WL_CONNECTED)
+    {
 
         Serial.println("Connecting to WiFi..");
 
@@ -34,13 +36,12 @@ void setup()
     digitalWrite(LED_BUILTIN, LOW);
 
     // 设置服务器
-    server.on("/unlock", unlock());
-    server.on("/log", checkLog());
+    server.on("unlock", unlock());
+    server.on("log", checkLog());
     server.onNotFound(handleNotFound);
     server.begin();
 
     Serial.println("HTTP server started");
-
 }
 
 void loop()
@@ -52,12 +53,17 @@ void unlock()
 {
     Serial.println("unlocking");
 
+    // 要验证header中的token字段 要手动获取
+
     unlock_times++;
 
     digitalWrite(LED_BUILTIN, HIGH);
     delay(5);
     // 舵机相关电平修改
     // digitalWrite(pin, value);
+    // 手动延迟5秒后再转回去 此过程中会导致程序无响应
+
+    server.send(200, "text/json", "{ \"result:\":\"ok\", + \"reason:\":\"null\" }");
 }
 
 void checkLog()
@@ -70,8 +76,8 @@ void checkLog()
     digitalWrite(LED_BUILTIN, LOW);
 }
 
-void handleNotFound() 
-{                           
-  server.send(404, "text/plain", "404: Not found");
+void handleNotFound()
+{
+    server.send(404, "text/plain", "404: Not found");
 }
 // 当浏览器请求的网络资源无法在服务器找到时，NodeMCU将调用此函数。
