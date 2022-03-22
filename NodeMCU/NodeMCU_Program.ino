@@ -29,7 +29,7 @@ void setup()
     server.collectHeaders(header_keys, sizeof(header_keys) / sizeof(header_keys[0]));
     Serial.println("HTTP server started");
 
-    Serial.println("SPIFFS initializing");
+    Serial.println("SPIFFS initializing...");
 
     if (SPIFFS.begin())
     {
@@ -48,70 +48,90 @@ void loop()
 
 void unlock()
 {
-    Serial.println("unlocking");
-
-    if (server.hasHeader("token"))
+    if (authenticate())
     {
-        if (server.header("token") == token)
+        Serial.println("unlocking");
+
+        Serial.println("token is correct");
+        Serial.println(server.header("Date")); // not working
+
+        File log;
+
+        if (SPIFFS.exists(log_path))
         {
-            Serial.println("token is correct");
-            Serial.println(server.header("Date")); // not working
-
-            File log;
-
-            if (SPIFFS.exists(log_path))
-            {
-                Serial.println("log file exists");
-                log = SPIFFS.open(log_path, "a");
-                log.println(server.header("Date") + " " + server.header("DEVICE_TYPE"));
-            }
-            else
-            {
-                log = SPIFFS.open(log_path, "w");
-                log.println(server.header("Date") + " " + server.header("DEVICE_TYPE"));
-            }
-            log.close();
-
-            server.send(200, "text/json", "{ \"result\":\"ok\", + \"reason:\":\"null\" }");
+            Serial.println("log file exists");
+            log = SPIFFS.open(log_path, "a");
+            log.println(server.header("Date") + " " + server.header("DEVICE_TYPE"));
         }
         else
         {
-            server.send(401, "text/json", "{ \"result\": \"failed\", \"reason\": \"invaild authorization token\" }");
+            log = SPIFFS.open(log_path, "w");
+            log.println(server.header("Date") + " " + server.header("DEVICE_TYPE"));
         }
-    }
-    else
-    {
-        server.send(401, "text/json", "{ \"result\": \"failed\", \"reason\": \"missing authorization token\" }");
-    }
+        log.close();
 
-    unlock_times++;
-    File data_handle = SPIFFS.open("unlock_time.txt", "w");
-    data_handle.println(String(unlock_times));
-    data_handle.close();
+        server.send(200, "text/json", json_response("ok", "null", 64));
+
+        unlock_times++;
+        Serial.println(unlock_times);
+        Serial.println(String(unlock_times));
+        File data_handle = SPIFFS.open("unlock_time.txt", "w");
+        data_handle.println(String(unlock_times));
+        data_handle.close();
+    }
 }
 
 void checkLog()
 {
-    Serial.println("checking log");
-    File times;
-    if (SPIFFS.exists("unlock_times.txt"))
+    if (authenticate())
     {
-        times = SPIFFS.open("unlock_times.txt", "r");
-        unlock_times = (int)times.read();
-        Serial.println(unlock_times);
+        Serial.println("checking log");
+        File times;
+        if (SPIFFS.exists("unlock_times.txt"))
+        {
+            times = SPIFFS.open("unlock_times.txt", "r");
+            unlock_times = (int)times.read();
+            Serial.println(unlock_times);
+        }
+        else
+        {
+            times = SPIFFS.open("unlock_times.txt", "w");
+            times.println("0");
+        }
+        times.close();
+        server.send(200, "text/json", "{ \"unlock times\":\"" + String(unlock_times) + "\"}");
     }
-    else
-    {
-        times = SPIFFS.open("unlock_times.txt", "w");
-        times.println("0");
-    }
-    times.close();
-    server.send(200, "text/json", "{ \"unlock times\":\"" + String(unlock_times) + "\"}");
 }
 
 bool authenticate()
 {
+    if (server.hasHeader("token"))
+    {
+        if (server.header("token") == token)
+        {
+            return true;
+        }
+        else
+        {
+            server.send(401, "text/json", json_response("error", "invaild authorization token", 128));
+        }
+    }
+    else
+    {
+        server.send(401, "text/json", json_response("error", "missing authorization token", 128));
+    }
+
     return false;
+}
+
+String json_response(String result, String reason, int size)
+{
+    String json;
+    DynamicJsonDocument doc(size);
+    doc["result"] = result;
+    doc["reason"] = reason;
+    serializeJson(doc, json);
+    return json;
 }
 
 void handleNotFound()
@@ -132,7 +152,7 @@ void connectWiFi()
     blink(3, 100);
 
     Serial.println("Connection established!");
-    Serial.print("IP address:    ");
+    Serial.print("IP address:");
     Serial.println(WiFi.localIP());
 }
 
