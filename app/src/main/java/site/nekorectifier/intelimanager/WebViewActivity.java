@@ -15,6 +15,7 @@ import site.nekorectifier.intelimanager.databinding.ActivityWebViewBinding;
 public class WebViewActivity extends AppCompatActivity {
 
     ActivityWebViewBinding binding;
+    // String url = "http://cas.huat.edu.cn/authserver/login";
     String url = "http://cas.huat.edu.cn/authserver/login";
 
     @SuppressLint("SetJavaScriptEnabled")

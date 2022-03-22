@@ -11,12 +11,13 @@
             android:title="验证token"
             app:useSimpleSummaryProvider="true" />
         <EditTextPreference
-            android:defaultValue="http://192.168.2.243"
+            android:defaultValue="192.168.2.20"
             android:icon="@drawable/ic_baseline_perm_scan_wifi_24"
             android:key="MCU_IP"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="IP 地址" />
+            android:title="IP 地址"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
 </PreferenceScreen>
