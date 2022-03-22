@@ -10,10 +10,9 @@ const char *ssid = "叁壹零";
 const char *password = "sanyiling";
 const char *header_keys[] = {"token", "DEVICE_TYPE"};
 const char *token = "226f76b55acb49701e06ded1d95165d179458f6fc37f5c6fc760ae30dec1c378";
-String log_path = "/log/log.txt"
+String log_path = "/log.txt";
 
-    void
-    setup()
+void setup()
 {
     Serial.begin(115200);
 
@@ -30,9 +29,9 @@ String log_path = "/log/log.txt"
     server.collectHeaders(header_keys, sizeof(header_keys) / sizeof(header_keys[0]));
     Serial.println("HTTP server started");
 
-    Serial.println("SPIFFS initializing")
+    Serial.println("SPIFFS initializing");
 
-        if (SPIFFS.begin())
+    if (SPIFFS.begin())
     {
         Serial.println("SPIFFS Started.");
     }
@@ -56,11 +55,24 @@ void unlock()
         if (server.header("token") == token)
         {
             Serial.println("token is correct");
-            Serial.println(server.header("Date"));
-            File data_handle = SPIFFS.open(log_path, "w");
-            data_handle.println("");
+            Serial.println(server.header("Date")); // not working
 
-            server.send(200, "text/json", "{ \"result:\":\"ok\", + \"reason:\":\"null\" }");
+            File log;
+
+            if (SPIFFS.exists(log_path))
+            {
+                Serial.println("log file exists");
+                log = SPIFFS.open(log_path, "a");
+                log.println(server.header("Date") + " " + server.header("DEVICE_TYPE"));
+            }
+            else
+            {
+                log = SPIFFS.open(log_path, "w");
+                log.println(server.header("Date") + " " + server.header("DEVICE_TYPE"));
+            }
+            log.close();
+
+            server.send(200, "text/json", "{ \"result\":\"ok\", + \"reason:\":\"null\" }");
         }
         else
         {
@@ -73,14 +85,33 @@ void unlock()
     }
 
     unlock_times++;
-   
+    File data_handle = SPIFFS.open("unlock_time.txt", "w");
+    data_handle.println(String(unlock_times));
+    data_handle.close();
 }
 
 void checkLog()
 {
     Serial.println("checking log");
+    File times;
+    if (SPIFFS.exists("unlock_times.txt"))
+    {
+        times = SPIFFS.open("unlock_times.txt", "r");
+        unlock_times = (int)times.read();
+        Serial.println(unlock_times);
+    }
+    else
+    {
+        times = SPIFFS.open("unlock_times.txt", "w");
+        times.println("0");
+    }
+    times.close();
+    server.send(200, "text/json", "{ \"unlock times\":\"" + String(unlock_times) + "\"}");
+}
 
-    server.send(200, "text/json", "{ \"unlock times:\":" + String(unlock_times) + '}');
+bool authenticate()
+{
+    return false;
 }
 
 void handleNotFound()
